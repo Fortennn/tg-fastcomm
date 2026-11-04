@@ -284,39 +284,43 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // WebSocket подключение
-    function connectWebSocket() {
-        const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const url = `${proto}//${window.location.host}/ws`;
-        ws = new WebSocket(url);
+    // Опрос сервера в реальном времени (HTTP Polling)
+    let lastLogId = 0;
+    let isPolling = false;
 
-        ws.onopen = () => {
-            wsStatus.textContent = "🟢 Онлайн";
-            wsStatus.style.color = "var(--accent-emerald)";
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === "status") {
-                    updateStatusUI(msg.data);
-                } else if (msg.type === "log") {
-                    appendLog(msg.data);
+    async function pollUpdates() {
+        if (isPolling) return;
+        isPolling = true;
+        try {
+            const res = await fetch(`/api/updates?after=${lastLogId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status) {
+                    updateStatusUI(data.status);
                 }
-            } catch (e) {
-                console.error("WS parse error:", e);
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        appendLog(log);
+                        if (log.id > lastLogId) lastLogId = log.id;
+                    });
+                }
+                wsStatus.textContent = "🟢 Онлайн";
+                wsStatus.style.color = "var(--accent-emerald)";
+            } else {
+                wsStatus.textContent = "🟡 Подключение...";
+                wsStatus.style.color = "var(--accent-amber)";
             }
-        };
+        } catch (e) {
+            wsStatus.textContent = "🔴 Офлайн";
+            wsStatus.style.color = "var(--accent-rose)";
+        } finally {
+            isPolling = false;
+        }
+    }
 
-        ws.onclose = () => {
-            wsStatus.textContent = "🟡 Переподключение...";
-            wsStatus.style.color = "var(--accent-amber)";
-            setTimeout(connectWebSocket, 2000);
-        };
-
-        ws.onerror = () => {
-            ws.close();
-        };
+    function startLiveUpdates() {
+        pollUpdates();
+        setInterval(pollUpdates, 1000);
     }
 
     // Авторизация Telegram
@@ -451,5 +455,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Инициализация
     loadSettings();
-    connectWebSocket();
+    startLiveUpdates();
 });

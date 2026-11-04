@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import re
+import threading
 from datetime import datetime
 from telethon import TelegramClient, events, errors
 from telethon.tl.types import Channel
@@ -14,7 +15,6 @@ class BotManager:
         self.settings_file = settings_file
         self.session_name = session_name
         self.client: TelegramClient = None
-        self.loop = None
         self.is_running = False
         self.is_connected = False
         self.user_info = None
@@ -44,18 +44,44 @@ class BotManager:
         # Deduplication
         self.processed_posts = set()
 
-        # Callbacks
+        # Callbacks & Logs history
         self.log_callbacks = []
         self.status_callbacks = []
+        self.logs_history = []
+        self.next_log_id = 1
+
+        # Создаем и запускаем фоновый asyncio event loop в отдельном потоке
+        self.loop = asyncio.new_event_loop()
+        self.loop_thread = threading.Thread(target=self._run_loop, daemon=True)
+        self.loop_thread.start()
+
+        # Проверяем авторизацию при старте
+        if self.settings.get("api_id") and self.settings.get("api_hash"):
+            asyncio.run_coroutine_threadsafe(self.check_auth_status(), self.loop)
+
+    def _run_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    def run_async(self, coro, timeout=40):
+        """Синхронно ожидает выполнение async корутины в фоновом цикле."""
+        future = asyncio.run_coroutine_threadsafe(coro, self.loop)
+        return future.result(timeout=timeout)
 
     def log(self, level: str, message: str, meta: dict = None):
-        """Отправляет лог во все зарегистрированные обработчики (UI/WebSocket)."""
+        """Отправляет лог и сохраняет в истории с ID."""
         entry = {
+            "id": self.next_log_id,
             "time": datetime.now().strftime("%H:%M:%S"),
             "level": level.upper(),  # INFO, SUCCESS, TRIGGER, WARNING, ERROR
             "message": message,
             "meta": meta or {}
         }
+        self.next_log_id += 1
+        self.logs_history.append(entry)
+        if len(self.logs_history) > 300:
+            self.logs_history = self.logs_history[-300:]
+
         for cb in self.log_callbacks:
             try:
                 cb(entry)

@@ -44,14 +44,12 @@ def wait_for_server(port, timeout=10.0):
 
 
 def run_server(port):
-    """Запускает FastAPI/Uvicorn сервер в отдельном потоке."""
+    """Запускает Flask сервер в отдельном потоке."""
     try:
-        from backend.server import app
-        config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
-        server = uvicorn.Server(config)
-        server.run()
+        from backend.flask_server import app
+        app.run(host="127.0.0.1", port=port, debug=False, threaded=True)
     except Exception as e:
-        print(f"❌ Ошибка сервера uvicorn: {e}")
+        print(f"❌ Ошибка Flask сервера: {e}")
 
 
 def main():

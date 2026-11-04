@@ -23,7 +23,7 @@ version = 1.0.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3, telethon, fastapi, uvicorn, pydantic, websockets, python-dotenv, pyaes, pyasn1, rsa, requests
+requirements = python3, flask, telethon, python-dotenv, pyaes, pyasn1, rsa
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
@@ -57,7 +57,7 @@ android.ndk_api = 24
 p4a.bootstrap = webview
 
 # (int) Port to point webview to
-android.port = 28492
+android.port = 5000
 
 # (bool) If True, then the app will prevent the screen from turning off
 android.wakelock = True
