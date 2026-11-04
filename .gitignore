@@ -1,0 +1,10 @@
+# Telegram sessions & sensitive data
+*.session
+*.session-journal
+.env
+__pycache__/
+*.pyc
+
+# Build outputs
+bin/
+.buildozer/
