@@ -38,14 +38,17 @@ android.archs = arm64-v8a, armeabi-v7a
 # (list) Permissions
 android.permissions = INTERNET, ACCESS_NETWORK_STATE, WAKE_LOCK, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
 
+# (bool) If True, automatically accept the SDK license
+android.accept_sdk_license = True
+
 # (int) Target Android API
-android.api = 34
+android.api = 33
 
 # (int) Minimum API your APK will support.
 android.minapi = 24
 
-# (int) Android SDK version to use
-android.sdk = 34
+# (int) Android NDK API to use
+android.ndk_api = 24
 
 # (str) Bootstrap to use for android (webview is used for local web app UI)
 p4a.bootstrap = webview
