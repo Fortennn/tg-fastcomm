@@ -41,6 +41,9 @@ android.permissions = INTERNET, ACCESS_NETWORK_STATE, WAKE_LOCK, FOREGROUND_SERV
 # (bool) If True, automatically accept the SDK license
 android.accept_sdk_license = True
 
+# (str) Android build tools version to use (pins to stable 34.0.0 instead of alpha 37)
+android.build_tools_version = 34.0.0
+
 # (int) Target Android API
 android.api = 33
 
