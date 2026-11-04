@@ -16,10 +16,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -51,28 +51,17 @@ jobs:
             pkg-config \
             cmake \
             zip \
-            unzip
+            unzip \
+            ccache
 
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          pip install --upgrade "cython<3.0" buildozer virtualenv
-
-      - name: Pre-accept Android SDK Licenses
-        run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
-            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          fi
-          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/licenses
-          if [ -d "$ANDROID_HOME/licenses" ]; then
-            cp -r $ANDROID_HOME/licenses/* /home/runner/.buildozer/android/platform/android-sdk/licenses/ || true
-          fi
+          pip install "cython==0.29.33" buildozer virtualenv
 
       - name: Build APK with Buildozer
         run: |
-          yes | buildozer -v android debug
+          buildozer -v android debug || (echo "=== BUILDOZER LOG ===" && tail -n 150 ~/.buildozer/buildozer.log && exit 1)
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
